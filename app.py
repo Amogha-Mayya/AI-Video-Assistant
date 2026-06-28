@@ -331,16 +331,24 @@ def render_step_bar(label: str, key: str, icon: str):
 
 # ─── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="hero-title" style="font-size:1.6rem">🎬 AI<br>Video</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-sub">Meeting Intelligence</div>', unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown('<div class="section-label">Source</div>', unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader(
+        "Upload audio or video",
+        type=["mp3", "mp4", "wav", "m4a", "webm", "mkv"],
+        label_visibility="collapsed"
+    )
+    
+    source = None
+    if uploaded_file:
+        save_path = f"/tmp/{uploaded_file.name}"
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.read())
+        source = save_path
 
-    st.markdown('<span class="badge badge-purple">Input</span>', unsafe_allow_html=True)
-    source = st.text_input("YouTube URL or File Path", placeholder="")
-
-    language = st.selectbox("Language", ["english"], index=0)
-
-    run_btn = st.button("⚡  Analyse", use_container_width=True)
+    language = st.selectbox("Language", ["english"], index=0, label_visibility="collapsed")
+    st.markdown("<br>", unsafe_allow_html=True)
+    run_btn = st.button("Run analysis", use_container_width=True)
 
     if st.session_state.pipeline_done:
         st.markdown("---")
@@ -362,8 +370,9 @@ st.markdown("---")
 
 # ── Run Pipeline ────────────────────────────────────────────────────────────────
 if run_btn:
-    if not source.strip():
-        st.error("Please enter a YouTube URL or file path.")
+    # after
+    if not source:
+        st.error("Please upload an audio or video file to continue.")
     else:
         st.session_state.pipeline_done = False
         st.session_state.result = None
