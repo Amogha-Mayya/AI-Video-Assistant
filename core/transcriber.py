@@ -10,7 +10,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def transcribe_chunk(chunk_path: str, translate: bool = False) -> str:
     with open(chunk_path, "rb") as audio_file:
         transcript = client.audio.transcriptions.create(
-            model="gpt-4o-transcribe",
+            model="gpt-4o-mini-transcribe",
             file=audio_file,
         )
 

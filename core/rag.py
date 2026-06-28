@@ -8,14 +8,14 @@ from langchain_openai import ChatOpenAI
 
 
 def get_llm():
-    return ChatOpenAI(model = "gpt-4.1-mini",temperature=0.2)
+    return ChatOpenAI(model = "gpt-4.1-nano",temperature=0.2)
 
 def format_docs(docs):
     return "\n\n".join([doc.page_content for doc in docs])
 
 def build_rag_chain(transcript:str):
     vector_store = build_vector_store(transcript)
-    retriever = get_retriever(vector_store, k = 4)
+    retriever = get_retriever(vector_store, k = 2)
 
     llm = get_llm()
 

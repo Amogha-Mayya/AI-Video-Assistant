@@ -2,20 +2,21 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+import yake
 
 def get_llm():
     return ChatOpenAI(
-        model="gpt-4.1-mini",
+        model="gpt-4.1-nano",
         temperature=0.1,
+        max_tokens = 350
     )
 
 
 # Split transcript into manageable chunks
 def split_transcript(transcript: str) -> list:
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=2000,
-        chunk_overlap=100,
+        chunk_size=1500,
+        chunk_overlap=80,
     )
     return splitter.split_text(transcript)
 
@@ -76,25 +77,42 @@ Requirements:
     return reduce_chain.invoke({"text": combined})
 
 
+
 def generate_title(summary: str) -> str:
-    llm = get_llm()
-
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                """Generate a professional meeting title.
-
-Rules:
-- Maximum 8 words.
-- Return ONLY the title.
-- No quotation marks.
-- No explanation.""",
-            ),
-            ("human", "{text}"),
-        ]
+    kw_extractor = yake.KeywordExtractor(
+        lan="en",
+        n=3,
+        top=10
     )
 
-    chain = prompt | llm | StrOutputParser()
+    keywords = kw_extractor.extract_keywords(summary)
 
-    return chain.invoke({"text": summary})
+    for keyword, score in keywords:
+
+        # Ignore very short phrases
+        if len(keyword.split()) >= 2:
+            return keyword.title()
+
+    return "Meeting Transcript"
+# def generate_title(summary: str) -> str:
+#     llm = get_llm()
+
+#     prompt = ChatPromptTemplate.from_messages(
+#         [
+#             (
+#                 "system",
+#                 """Generate a professional meeting title.
+
+# Rules:
+# - Maximum 8 words.
+# - Return ONLY the title.
+# - No quotation marks.
+# - No explanation.""",
+#             ),
+#             ("human", "{text}"),
+#         ]
+#     )
+
+#     chain = prompt | llm | StrOutputParser()
+
+#     return chain.invoke({"text": summary})

@@ -1,52 +1,65 @@
-# Actionable Items
-# Decision
-# Questions
-from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough,RunnableLambda
-from langchain_openai import ChatOpenAI
-
-import os
 
 def get_llm():
-    return ChatOpenAI(model = "gpt-4.1-mini",temperature=0.2)
+    return ChatOpenAI(model="gpt-4.1-nano", temperature=0.2, max_tokens=600)
 
-def build_chain(system_prompt : str):
+def extract_all(transcript: str) -> dict:
     llm = get_llm()
-    return (
-        RunnablePassthrough() | RunnableLambda(lambda x : {"text" : x}) |ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human","{text}"),
-    ]) | llm |StrOutputParser()
-    )
 
-def extract_action_items(transcript:str)->str:
-    chain = build_chain(
-         "You are an expert meeting analyst. From the meeting transcript, "
-        "extract all action items. For each provide:\n"
-        "- Task description\n"
-        "- Owner (who is responsible)\n"
-        "- Deadline (if mentioned, else write 'Not specified')\n\n"
-        "Format as a numbered list. If none found say 'No action items found.'"
-    )
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """Analyze this meeting transcript and extract three things.
+Use EXACTLY these section headers:
 
-    return chain.invoke(transcript)
+##ACTION_ITEMS
+Numbered list of tasks with owner and deadline (write 'Not specified' if missing).
+If none, write 'No action items found.'
 
+##KEY_DECISIONS
+Numbered list of decisions made.
+If none, write 'No key decisions found.'
 
-def extract_key_decisions(transcript: str) -> str:
-    chain = build_chain(
-        "You are an expert meeting analyst. From the meeting transcript, "
-        "extract all key decisions made. Format as a numbered list. "
-        "If none found say 'No key decisions found.'"
-    )
-    return chain.invoke(transcript)
+##OPEN_QUESTIONS
+Numbered list of unresolved questions or follow-up topics.
+If none, write 'No open questions found.'
+
+Be concise. Max 6 points per section."""),
+        ("human", "{transcript}"),
+    ])
+
+    chain = prompt | llm | StrOutputParser()
+    raw = chain.invoke({"transcript": transcript})
+    return _parse(raw)
 
 
-def extract_questions(transcript: str) -> str:
-    chain = build_chain(
-        "From the meeting transcript, extract all unresolved questions "
-        "or topics needing follow-up. Format as a numbered list. "
-        "If none found say 'No open questions found.'"
-    )
-    return chain.invoke(transcript)
+def _parse(raw: str) -> dict:
+    sections = {
+        "action_items":   "No action items found.",
+        "key_decisions":  "No key decisions found.",
+        "open_questions": "No open questions found.",
+    }
+    markers = {
+        "##ACTION_ITEMS":   "action_items",
+        "##KEY_DECISIONS":  "key_decisions",
+        "##OPEN_QUESTIONS": "open_questions",
+    }
+
+    current_key = None
+    buffer = []
+
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if stripped in markers:
+            if current_key and buffer:
+                sections[current_key] = "\n".join(buffer).strip()
+            current_key = markers[stripped]
+            buffer = []
+        else:
+            if current_key:
+                buffer.append(line)
+
+    if current_key and buffer:
+        sections[current_key] = "\n".join(buffer).strip()
+
+    return sections
