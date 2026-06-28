@@ -1,40 +1,32 @@
-import whisper
+from openai import OpenAI
 import os
+from dotenv import load_dotenv
 
-WHISPER_MODEL = os.getenv("WHISPER_MODEL","small")
+load_dotenv()
 
-_model = None
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# locally load the model
-def load_model():
-    global _model
 
-    if _model is None:
-        print(f"Loading Model....")
-        _model = whisper.load_model(WHISPER_MODEL)
-        print("whisper model loaded successfully")
+def transcribe_chunk(chunk_path: str, translate: bool = False) -> str:
+    with open(chunk_path, "rb") as audio_file:
+        transcript = client.audio.transcriptions.create(
+            model="gpt-4o-transcribe",
+            file=audio_file,
+        )
 
-    return _model
+    return transcript.text
 
-def transcribe_chunk(chunk_path : str , translate : bool = False) -> str:
-    model = load_model()
-
-    task = "translate" if translate else "transcribe"
-    result = model.transcribe(chunk_path , task = task)
-
-    return result['text']
 
 # transcribe all the chunks one by one
-def transcribe_all(chunks : list, translate : bool = False) -> str:
-    full_transcript = "" 
+def transcribe_all(chunks: list, translate: bool = False) -> str:
+    full_transcript = ""
 
-    for i, chunk in enumerate(chunks):  
+    for i, chunk in enumerate(chunks):
         print(f"Transcribing chunk {i + 1}/{len(chunks)}...")
-        text = transcribe_chunk(chunk, translate=translate)  
+        text = transcribe_chunk(chunk, translate=translate)
 
-        full_transcript += text + " "  
+        full_transcript += text + " "
 
     print("Transcription complete.")
 
-    return full_transcript  
-    
+    return full_transcript

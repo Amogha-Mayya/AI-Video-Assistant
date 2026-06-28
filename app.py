@@ -336,9 +336,9 @@ with st.sidebar:
     st.markdown("---")
 
     st.markdown('<span class="badge badge-purple">Input</span>', unsafe_allow_html=True)
-    source = st.text_input("YouTube URL or File Path", placeholder="https://youtube.com/watch?v=... or /path/to/file.mp4")
+    source = st.text_input("YouTube URL or File Path", placeholder="")
 
-    language = st.selectbox("Language", ["english", "hinglish"], index=0)
+    language = st.selectbox("Language", ["english"], index=0)
 
     run_btn = st.button("⚡  Analyse", use_container_width=True)
 

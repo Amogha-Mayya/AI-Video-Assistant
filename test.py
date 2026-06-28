@@ -1,9 +1,20 @@
-from utils.audio_processor import process_input
-from core.transcriber import transcribe_all
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
-source = "https://www.youtube.com/watch?v=Lg-meK5IU8Q"
+load_dotenv()
 
-chunks = process_input(source)
+import wave
+import os
 
-print(transcribe_all(chunks))
+path = "downloads/RAG Explained in 12 Minutes.wav_chunk_1.wav"
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+with open(path, "rb") as f:
+    result = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=f,
+    )
+
+print(result.text)

@@ -5,10 +5,12 @@ from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough,RunnableLambda
+from langchain_openai import ChatOpenAI
+
 import os
 
 def get_llm():
-    return ChatMistralAI(model = "mistral-small-latest", mistral_api_key = os.getenv("MISTRAL_API_KEY"),temperature=0.2)
+    return ChatOpenAI(model = "gpt-4.1-mini",temperature=0.2)
 
 def build_chain(system_prompt : str):
     llm = get_llm()
