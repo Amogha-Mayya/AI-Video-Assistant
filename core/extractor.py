@@ -6,31 +6,27 @@ import os
 
 
 def get_llm():
-    return ChatOpenAI(model="gpt-4.1-nano", temperature=0.2, max_tokens=600)
+    return ChatOpenAI(model="gpt-4.1-nano", temperature=0.2, max_tokens=500)
 
 
-# ── English extraction (single LLM call) ─────────────────────────────────────
+# ── English extraction ────────────────────────────────────────────────────────
 
 def _extract_english(transcript: str) -> dict:
     llm = get_llm()
 
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """Analyze this meeting transcript and extract three things.
-Use EXACTLY these section headers:
-
-##ACTION_ITEMS
-Numbered list of tasks with owner and deadline (write 'Not specified' if missing).
-If none, write 'No action items found.'
-
-##KEY_DECISIONS
-Numbered list of decisions made.
-If none, write 'No key decisions found.'
-
-##OPEN_QUESTIONS
-Numbered list of unresolved questions or follow-up topics.
-If none, write 'No open questions found.'
-
-Be concise. Max 6 points per section."""),
+        ("system",
+         "Extract three things from this meeting transcript.\n"
+         "Use EXACTLY these headers (no spaces, no bold, no extra chars):\n\n"
+         "##ACTION_ITEMS\n"
+         "Numbered list. Include owner and deadline ('Not specified' if missing). Max 6.\n"
+         "If none: 'No action items found.'\n\n"
+         "##KEY_DECISIONS\n"
+         "Numbered list of decisions made. Max 6.\n"
+         "If none: 'No key decisions found.'\n\n"
+         "##OPEN_QUESTIONS\n"
+         "Numbered list of unresolved questions or follow-ups. Max 6.\n"
+         "If none: 'No open questions found.'"),
         ("human", "{transcript}"),
     ])
 
@@ -48,11 +44,6 @@ def _extract_hindi(transcript: str) -> dict:
         result["_note"] = "_(Hindi extraction unavailable — SARVAM_API_KEY not set)_"
         return result
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-
     truncated = transcript[:6000] if len(transcript) > 6000 else transcript
 
     payload = {
@@ -61,30 +52,32 @@ def _extract_hindi(transcript: str) -> dict:
             {
                 "role": "system",
                 "content": (
-                    "मीटिंग ट्रांसक्रिप्ट का विश्लेषण करें और तीन चीजें निकालें। "
-                    "EXACTLY इन section headers का उपयोग करें:\n\n"
+                    "मीटिंग ट्रांसक्रिप्ट से तीन चीजें निकालें। "
+                    "EXACTLY इन headers का उपयोग करें:\n\n"
                     "##ACTION_ITEMS\n"
-                    "कार्यों की क्रमांकित सूची (मालिक और समय सीमा सहित, यदि नहीं मिला तो 'निर्दिष्ट नहीं' लिखें)।\n"
+                    "कार्यों की क्रमांकित सूची (मालिक और समय सीमा)। अधिकतम 6।\n"
                     "यदि कोई नहीं: 'कोई कार्य सूची नहीं मिली।'\n\n"
                     "##KEY_DECISIONS\n"
-                    "लिए गए मुख्य निर्णयों की क्रमांकित सूची।\n"
+                    "मुख्य निर्णयों की क्रमांकित सूची। अधिकतम 6।\n"
                     "यदि कोई नहीं: 'कोई मुख्य निर्णय नहीं मिला।'\n\n"
                     "##OPEN_QUESTIONS\n"
-                    "अनसुलझे प्रश्नों या फॉलो-अप विषयों की क्रमांकित सूची।\n"
-                    "यदि कोई नहीं: 'कोई खुले प्रश्न नहीं मिले।'\n\n"
-                    "प्रति section अधिकतम 6 बिंदु।"
+                    "अनसुलझे प्रश्नों की क्रमांकित सूची। अधिकतम 6।\n"
+                    "यदि कोई नहीं: 'कोई खुले प्रश्न नहीं मिले।'"
                 ),
             },
             {"role": "user", "content": truncated},
         ],
-        "max_tokens": 700,
+        "max_tokens": 600,
         "temperature": 0.2,
     }
 
     try:
         response = requests.post(
             "https://api.sarvam.ai/v1/chat/completions",
-            headers=headers,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             json=payload,
             timeout=60,
         )
@@ -97,7 +90,7 @@ def _extract_hindi(transcript: str) -> dict:
         return result
 
 
-# ── Parser ────────────────────────────────────────────────────────────────────
+# ── Parser — normalizes headers before matching ───────────────────────────────
 
 def _parse(raw: str, hindi: bool = False) -> dict:
     if hindi:
@@ -114,20 +107,32 @@ def _parse(raw: str, hindi: bool = False) -> dict:
         }
 
     markers = {
-        "##ACTION_ITEMS":   "action_items",
-        "##KEY_DECISIONS":  "key_decisions",
-        "##OPEN_QUESTIONS": "open_questions",
+        "ACTION_ITEMS":   "action_items",
+        "KEY_DECISIONS":  "key_decisions",
+        "OPEN_QUESTIONS": "open_questions",
     }
 
     current_key = None
     buffer = []
 
     for line in raw.splitlines():
-        stripped = line.strip()
-        if stripped in markers:
+        # Normalize: strip spaces, leading #, *, _ so variants like
+        # "## **ACTION_ITEMS**", "###ACTION_ITEMS", "**##ACTION_ITEMS**"
+        # all resolve to "ACTION_ITEMS"
+        normalized = (
+            line.strip()
+                .lstrip("#")
+                .strip()
+                .strip("*")
+                .strip("_")
+                .strip()
+                .upper()
+        )
+
+        if normalized in markers:
             if current_key and buffer:
                 sections[current_key] = "\n".join(buffer).strip()
-            current_key = markers[stripped]
+            current_key = markers[normalized]
             buffer = []
         else:
             if current_key:

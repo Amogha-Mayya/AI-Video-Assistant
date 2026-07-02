@@ -454,7 +454,7 @@ with st.sidebar:
         ["english", "hindi"],
         index=0,
         label_visibility="collapsed",
-        format_func=lambda x: "🇬🇧 English" if x == "english" else "🇮🇳 Hindi",
+        format_func=lambda x: " 🇬🇧 English" if x == "english" else "🇮🇳 Hindi",
     )
 
     if language == "hindi":
