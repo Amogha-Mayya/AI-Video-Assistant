@@ -13,11 +13,11 @@ An AI-powered application that transforms meeting recordings and videos into int
 
 ### Home Page
 
-![Home Page](assets/Screenshot 2026-07-03 151723.png)
+![Home Page](assets/home.png)
 
 ### Chat Interface
 
-![Chat Interface](assets/Screenshot 2026-07-03 152021.png)
+![Chat Interface](assets/rag.png)
 
 
 ## Features
