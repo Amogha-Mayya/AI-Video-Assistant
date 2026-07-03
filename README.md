@@ -8,19 +8,17 @@ An AI-powered application that transforms meeting recordings and videos into int
 
 > **Note:** The application is hosted on Streamlit Community Cloud. If the app has gone to sleep due to inactivity, simply click **"Get this app back up"** and wait a few moments for it to restart.
 
----
 
 ## Preview
 
 ### Home Page
 
-![Home Page](assets\Screenshot 2026-07-03 151723.png)
+![Home Page](assets/Screenshot 2026-07-03 151723.png)
 
 ### Chat Interface
 
-![Chat Interface](assets\Screenshot 2026-07-03 152021.png)
+![Chat Interface](assets/Screenshot 2026-07-03 152021.png)
 
----
 
 ## Features
 
@@ -32,7 +30,6 @@ An AI-powered application that transforms meeting recordings and videos into int
 * Context-aware question answering
 * Vector database for semantic search
 * Action Items,Key Decisions, Open Questions from the video
----
 
 ## Technologies Used
 
@@ -43,8 +40,6 @@ An AI-powered application that transforms meeting recordings and videos into int
 * Sarvam AI (Speech-to-Text)
 * ChromaDB
 * Retrieval-Augmented Generation (RAG)
-
----
 
 ## Use Cases
 
