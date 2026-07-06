@@ -6,11 +6,12 @@ An AI-powered application that transforms meeting recordings and videos into int
 
 **Streamlit App:** https://ai-video-assistant-te7xnucappypdjt7jdjqye4.streamlit.app/
 
+![Get this app back up!](assets/sleep.png)
+
 > **Note:** The application is hosted on Streamlit Community Cloud. If the app has gone to sleep due to inactivity, simply click **"Get this app back up"** and wait a few moments for it to restart.
 
-
 ## Preview
-
+    
 ### Home Page
 
 ![Home Page](assets/home.png)
