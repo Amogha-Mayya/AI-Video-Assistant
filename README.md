@@ -4,7 +4,7 @@ An AI-powered application that transforms meeting recordings and videos into int
 
 ## Live Demo
 
-**Streamlit App:** https://ai-video-assistant-te7xnucappypdjt7jdjqye4.streamlit.app/
+**Streamlit App:** https://ai-video-intelligence.streamlit.app/
 
 ![Get this app back up!](assets/sleep.png)
 
